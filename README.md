@@ -1,4 +1,4 @@
-# Echo
+# echo
 
 An interactive web application designed to retrieve information about your favorite artists and songs, offering a personalized recommendation system tailored to your musical preferences.
 
