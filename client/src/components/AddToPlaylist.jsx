@@ -54,18 +54,22 @@ function AddToPlaylist({uri, token}) {
       Choose playlist to add to: 
       </div>
         {playlists ? (
-          <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-5'>
+          <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-5 relative'>
           {playlists.map((playlist)=> (
+            <div className="group relative">
             <div
-            key={playlist.id}
-            className="flex flex-col rounded-lg overflow-hidden w-28 h-40 hover:opacity-80 p-1 hover:cursor-pointer hover:scale-105 transition-transform bg-gray-800 ease-in text-white active:scale-100"
-          >
-            <img
-              src={playlist.images[0]?.url}
-              alt={playlist.name}
-              className="h-28 w-full object-cover rounded-t-lg"
-            />
-            <div className="mt-2 text-xs font-semibold">{playlist.name}</div>
+              key={playlist.id}
+              className="flex flex-col rounded-lg overflow-hidden w-28 h-28 hover:opacity-80 hover:cursor-pointer hover:scale-105 transition-transform bg-gray-800 ease-in text-white active:scale-100 relative"
+            >
+              <img
+                src={playlist.images[0]?.url}
+                alt={playlist.name}
+                className="h-28 w-full object-cover rounded-t-lg"
+              />
+              <div className="text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
+                {playlist.name}
+              </div>
+            </div>
           </div>
           ))}
           </div>
