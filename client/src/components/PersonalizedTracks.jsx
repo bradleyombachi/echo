@@ -73,7 +73,7 @@ const PersonalizedTracks = ({ token }) => {
   const handlePlay = (previewUrl) => {
     
     // Pause the currently playing audio (if any)
-    audio.pause(previewUrl);
+    audio.pause();
   
     // Set the new audio source to the preview URL
   
@@ -135,6 +135,7 @@ const PersonalizedTracks = ({ token }) => {
   };
 
   const getTopTracksandRecFromTracks = async () => {
+    audio.pause();
     try {
       const response = await fetch('https://api.spotify.com/v1/me/top/tracks?time_range=short_term&limit=5', {
         method: 'GET',
