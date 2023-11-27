@@ -11,6 +11,7 @@ import Filters from './Filters';
 import { FaSliders } from "react-icons/fa6";
 import Dropdown from './Dropdown';
 import ReactDOM from 'react-dom'
+import Settings from './Settings';
 
 
 const PersonalizedTracks = ({ token }) => {
@@ -26,7 +27,13 @@ const PersonalizedTracks = ({ token }) => {
   const [showSelectedTrack, setShowSelectedTrack] = useState(false);
   const [tracksSelected, setTracksSelected] = useState(false);
   const [artistsSelected, setArtistsSelected] = useState(false);
-  const [term, setTerm] = useState('')
+  const [term, setTerm] = useState('');
+  const [autoPlay, setAutoPlay] = useState(false);
+
+  const handleToggleChange = () => {
+    setAutoPlay(!autoPlay);
+  }
+
 
   const handleArtistSelection = () =>  {
     setArtistsSelected((prevState)=>!prevState);
@@ -177,16 +184,23 @@ useEffect(()=>{
   recList && recList.length>0 ? (
     setIsPlaying(false),
     setAudio(new Audio(selectedTrack.preview_url))
-    
   ) : (
     null
   )
 }, [selectedTrack])
 
-useEffect(() => {
-  document.getElementById('my_modal_2').showModal();
+useEffect(()=>{
+  autoPlay ? (
+  handlePlay()
+  
+  ) : (null)
 
-}, []);
+}, [audio])
+
+// useEffect(() => {
+//   document.getElementById('my_modal_2').showModal();
+
+// }, []);
 
 
   return (
@@ -197,7 +211,7 @@ useEffect(() => {
           <div className='font-light pl-3'>Spotify Recommendations</div>
         </div>
         
-        <div>
+        <div className='flex gap-2'>
         <button className='p-3 rounded-lg hover:cursor-pointer bg-slate-600 flex justify-center items-center active:scale-95 transition ease-in hover:bg-slate-500 '
         onClick={()=>document.getElementById('my_modal_2').showModal()}>
         <FaSliders />
@@ -226,6 +240,25 @@ useEffect(() => {
             </div>
           </div>
         </dialog>
+
+        <div>
+        <button className='p-3 rounded-lg hover:cursor-pointer bg-slate-600 flex justify-center items-center active:scale-95 transition ease-in hover:bg-slate-500 
+        ' onClick={()=>document.getElementById('my_modal_3').showModal()}
+        >
+        <IoSettingsSharp />
+        </button>
+        <dialog id="my_modal_3" className="modal">
+          <div className="modal-box glass">
+            <Settings handleToggleChange={handleToggleChange} autoPlay={autoPlay}/>
+            <div className="modal-action">
+              <form method="dialog">
+                <button className="btn rounded-full">Save</button>
+              </form>
+            </div>
+          </div>
+        </dialog>
+        </div>
+
       </div>
       </header>
       <div className='flex pt-20 flex-col justify-center items-center flex-grow'>
@@ -251,7 +284,7 @@ useEffect(() => {
             <AddToPlaylist uri={track.uri} token={token}/>
             <div className="modal-action">
               <form method="dialog">
-                <button className="btn">Close</button>
+                <button className="btn rounded-full">Close</button>
               </form>
             </div>
           </div>
@@ -312,14 +345,15 @@ useEffect(() => {
             <div className='p-1 bg-white relative'>
            
                  <img src={rec.tracks[0].album.images[0].url} height={50} width={50} />
-              
-             
+                 
+            </div>
+            <div className='flex truncate'>
+                <div className='flex flex-col pl-5'>
+                  <p className='font-bold'>{rec.tracks[0].name}</p>
+                  <p>{rec.tracks[0].artists[0].name}</p>
+                </div>
+            </div>
             
-            </div>
-            <div className='flex flex-col pl-5 '>
-              <p className='font-bold'>{rec.tracks[0].name}</p>
-              <p>{rec.tracks[0].artists[0].name}</p>
-            </div>
           </div>
           <div className='tooltip mr-2' data-tip="Open in Spotify">
             <div className='flex justify-center items-center'>
