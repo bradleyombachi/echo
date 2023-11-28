@@ -12,6 +12,10 @@ import { FaSliders } from "react-icons/fa6";
 import Dropdown from './Dropdown';
 import ReactDOM from 'react-dom'
 import Settings from './Settings';
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import 'react-circular-progressbar/dist/styles.css';
+import Placeholders from './Placeholders';
+
 
 
 const PersonalizedTracks = ({ token }) => {
@@ -29,11 +33,20 @@ const PersonalizedTracks = ({ token }) => {
   const [artistsSelected, setArtistsSelected] = useState(false);
   const [term, setTerm] = useState('');
   const [autoPlay, setAutoPlay] = useState(false);
+  const [progress, setProgress] = useState(null);
+  const [showList, setShowList] = useState(false);
+  const [numPlaceholders, setNumPlaceholders] = useState(0);
 
+  // Determines if audio will play automatically
   const handleToggleChange = () => {
     setAutoPlay(!autoPlay);
   }
 
+  const placeholderStyles = {
+    border: '1px',
+    width: '50px',
+
+  }
 
   const handleArtistSelection = () =>  {
     setArtistsSelected((prevState)=>!prevState);
@@ -44,6 +57,7 @@ const PersonalizedTracks = ({ token }) => {
     )
   }
 
+
   const handleTrackSelection = () => {
     setTracksSelected((prevState)=> !prevState);
     artistsSelected ? (
@@ -52,6 +66,8 @@ const PersonalizedTracks = ({ token }) => {
       null
     )
   }
+
+  // Options for time range parameter
   const handleShortTerm = () => {
     setTerm('short')
   }
@@ -68,10 +84,12 @@ const PersonalizedTracks = ({ token }) => {
     window.open(spotifyUrl, '_blank')
   }
 
+  // Search input
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
   };
 
+  // Determines which track is displayed
   const handleSelectTrack = (track) => {
     setSelectedTrack(track)
     setShowSelectedTrack(true);
@@ -87,15 +105,34 @@ const PersonalizedTracks = ({ token }) => {
     // Play the new audio after it has loaded
     audio.play();
 
-  
+    
     // Toggle the play/pause state
     setIsPlaying((prevState) => !prevState);
+
+    audio.addEventListener('timeupdate', function() {
+      const currentProgress = (audio.currentTime / audio.duration) * 100;
+      setProgress(currentProgress);
+    });
+
     audio.addEventListener('ended', function() {
+      if (autoPlay) {
+      // If autoPlay is true, perform actions based on whether artists or tracks are selected
+      if (artistsSelected) {
+        getTopArtistsAndRecFromArtists();
+      } else if (tracksSelected) {
+        getTopTracksandRecFromTracks();
+      }
+    }
+
+    else {
       setIsPlaying((prevState) => !prevState);
+    }
+
+      
     });
   };
 
-
+// Function to pause playback
    const handlePause = (preview_url) => {
     audio.pause();
     setIsPlaying((prevState)=>!prevState);
@@ -104,6 +141,7 @@ const PersonalizedTracks = ({ token }) => {
 
 
   const getTopArtistsAndRecFromArtists = async () => {
+    setShowList(true)
     audio.pause();
     try {
       const response = await fetch(`https://api.spotify.com/v1/me/top/artists?time_range=${term}_term&limit=5`, {
@@ -142,6 +180,7 @@ const PersonalizedTracks = ({ token }) => {
   };
 
   const getTopTracksandRecFromTracks = async () => {
+    setShowList(true)
     audio.pause();
     try {
       const response = await fetch('https://api.spotify.com/v1/me/top/tracks?time_range=short_term&limit=5', {
@@ -180,8 +219,11 @@ const PersonalizedTracks = ({ token }) => {
       }
   }
 
+  // Handles switching track
 useEffect(()=>{
   recList && recList.length>0 ? (
+    setProgress(0),
+    audio.pause(),
     setIsPlaying(false),
     setAudio(new Audio(selectedTrack.preview_url))
   ) : (
@@ -189,18 +231,23 @@ useEffect(()=>{
   )
 }, [selectedTrack])
 
+// Handles autoplay
 useEffect(()=>{
+  setProgress(0);
   autoPlay ? (
   handlePlay()
-  
+
   ) : (null)
 
 }, [audio])
 
-// useEffect(() => {
-//   document.getElementById('my_modal_2').showModal();
-
-// }, []);
+//Handles placeholder rendering
+useEffect(()=> {
+  recList.length < 4 ? (
+    setNumPlaceholders(4-recList.length)
+  ): (null)
+  
+}, [recList])
 
 
   return (
@@ -218,21 +265,8 @@ useEffect(()=>{
         </button>
         <dialog id="my_modal_2" className="modal">
           <div className="modal-box glass">
-            <Filters onArtistSelection={handleArtistSelection} onTrackSelection={handleTrackSelection} artistsSelected={artistsSelected} tracksSelected={tracksSelected}/>
-            <div className='flex justify-between'>
-              <div>
-              {tracksSelected ? (
-              <Dropdown shortTerm={handleShortTerm} mediumTerm={handleMediumTerm} longTerm={handleLongTerm}/>
-            ) : null}
-              </div>
-              <div>
-                {artistsSelected ? (
-                  <Dropdown shortTerm={handleShortTerm} mediumTerm={handleMediumTerm} longTerm={handleLongTerm}/>
-                ): (
-                  null
-                )}
-                </div>
-            </div>
+            <Filters onArtistSelection={handleArtistSelection} onTrackSelection={handleTrackSelection} artistsSelected={artistsSelected} tracksSelected={tracksSelected} handleShortTerm={handleShortTerm} handleMediumTerm={handleMediumTerm} handleLongTerm={handleLongTerm}/>
+            
             <div className="modal-action">
               <form method="dialog">
                 <button className="btn rounded-full">Save</button>
@@ -261,9 +295,10 @@ useEffect(()=>{
 
       </div>
       </header>
-      <div className='flex pt-20 flex-col justify-center items-center flex-grow'>
-      <div className='flex flex-col gap-8 w-full justify-center md:flex-row items-center'>
-      <div className=' w-96 flex flex-col pt-3 justify-center'>      
+      
+      <div className='flex pt-16 flex-col justify-center items-center flex-grow'>
+      <div className='flex flex-col top-0 w-full justify-center md:flex-row items-center'>
+      <div className=' top-0  w-96 flex flex-col justify-center'>      
       
         <div>
         {recommendations.tracks && recommendations.tracks.length > 0 ? (
@@ -275,8 +310,8 @@ useEffect(()=>{
           
           <CurrentTrack track={selectedTrack} />
 
-          <div className='flex justify-between h-20 w-full md:w-auto items-center'>
-          <div className='tooltip tooltip-bottom' data-tip='Add to Playlist'>
+          <div className='flex justify-between w-full md:w-auto items-center'>
+          <div className='flex tooltip tooltip-bottom' data-tip='Add to Playlist'>
           <button className='btn btn-circle mt-5 bg-slate-700 border-none text-white hover:bg-slate-500' onClick={()=>document.getElementById('my_modal_1').showModal()} > <FaPlus className='text-xl'/>
           </button>
           <dialog id="my_modal_1" className="modal">
@@ -293,15 +328,24 @@ useEffect(()=>{
          </div>
 
 
-  
-         <div>
-          <div className='btn btn-circle mt-5 bg-slate-700 border-none text-white hover:bg-slate-500' onClick={ !isPlaying ? () => handlePlay(track.preview_url) : () => handlePause(track.preview_url)} >
+          
+         <div className='flex btn-circle mt-5 justify-center items-center relative tooltip tooltip-bottom' data-tip="Preview song">
+        <div className='btn btn-circle bg-slate-700 border-none text-white hover:bg-slate-500' onClick={ !isPlaying ? () => handlePlay(track.preview_url) : () => handlePause(track.preview_url)} >
+          <div>
+          <CircularProgressbar className='flex absolute top-0 right-0 w-13 top' value={`${progress}`} text="" 
+          styles={buildStyles({
+            pathColor: 'white',
+            trailColor: "transparent"
+          })} />
+          </div>
+          <div className='absolute'>
             {isPlaying ? (
               <IoPause className='text-xl'/>
             ): (
               <IoPlay className='text-xl'/>
             )}
-            </div>
+            </div> 
+          </div>
           </div>
   
    
@@ -331,55 +375,75 @@ useEffect(()=>{
       
     </div>
     
-    <div className='flex flex-col w-full md:w-96 h-full top-0 gap-5 mt-9 relative'>
-    <ul className='flex flex-col gap-3 h-96 overflow-y-auto overflow-x-clip px-5'> 
-  {recList
-    .filter(rec => 
-      rec.tracks[0].name.toLowerCase().includes(inputValue.toLowerCase()) ||
-      rec.tracks[0].artists[0].name.toLowerCase().includes(inputValue.toLowerCase())
-    )
-    .map((rec) => (
-      <li key={rec.tracks[0].id}>
-        <div className='bg-slate-700 flex flex-row items-center rounded-xl p-3 gap-5 hover:cursor-pointer justify-between transition w-full hover:bg-slate-600 active:bg-slate-500' onClick={()=>handleSelectTrack(rec.tracks[0])}>
-          <div className='flex'>
-            <div className='p-1 bg-white relative'>
-           
-                 <img src={rec.tracks[0].album.images[0].url} height={50} width={50} />
+    {showList ? (
+          <div className='flex flex-col w-full md:w-96 h-full top-0 gap-0 relative justify-center pt-7'>
+          
+          <ul className='flex flex-col gap-3 h-96 overflow-y-auto overflow-x-clip px-5'> 
+        {recList
+          .filter(rec => 
+            rec.tracks[0].name.toLowerCase().includes(inputValue.toLowerCase()) ||
+            rec.tracks[0].artists[0].name.toLowerCase().includes(inputValue.toLowerCase())
+          )
+          .map((rec) => (
+            <div key={rec.tracks[0].id}>
+            <li>
+              <div className='bg-slate-700 flex flex-row items-center rounded-xl p-3 gap-5 hover:cursor-pointer justify-between transition w-full hover:bg-slate-600 active:bg-slate-500' onClick={()=>handleSelectTrack(rec.tracks[0])}>
+                <div className='flex'>
+                  <div className='p-1 bg-white relative'>
                  
-            </div>
-            <div className='flex truncate'>
-                <div className='flex flex-col pl-5'>
-                  <p className='font-bold'>{rec.tracks[0].name}</p>
-                  <p>{rec.tracks[0].artists[0].name}</p>
+                       <img src={rec.tracks[0].album.images[0].url} height={50} width={50} />
+                       
+                  </div>
+                  <div className='flex truncate overflow-hidden'>
+                      <div className='flex flex-col pl-5'>
+                        <p className='font-bold'>{rec.tracks[0].name}</p>
+                        <p>{rec.tracks[0].artists[0].name}</p>
+                      </div>
+                  </div>
+                  
                 </div>
-            </div>
-            
-          </div>
-          <div className='tooltip mr-2' data-tip="Open in Spotify">
-            <div className='flex justify-center items-center'>
-              <MdOpenInNew className='text-xl active:scale-90' onClick={() => handleExternalLink(rec.tracks[0].external_urls.spotify)}/>
-            </div>
-          </div>
-        </div>
-      </li>
-    ))
-  }
-</ul>
+                <div className='tooltip mr-2' data-tip="Open in Spotify">
+                  <div className='flex justify-center items-center'>
+                    <MdOpenInNew className='text-xl active:scale-90' onClick={() => handleExternalLink(rec.tracks[0].external_urls.spotify)}/>
+                  </div>
+                </div>
+              </div>
+            </li>
 
-        <div className='flex justify-between items-center mb-5 px-5 gap-5'>
-          <div className='w-full mb-2'>
-            <input className='input bg-slate-700 text-white py-2 px-4 rounded-lg w-full mr-7' value = {inputValue} onChange={handleInputChange}
-      placeholder='Search songs'></input>
-          </div>
-        <div className='tooltip ' data-tip='Create Playlist'>
-        <div className='btn btn-circle bg-slate-700 border-none text-white hover:bg-slate-500 mb-3' > <MdOutlinePlaylistAdd className='text-xl'/>
-        </div>
-        </div>
+            </div>
+          ))}
+        {recList.length < 4 ? (
+          <Placeholders numPlaceholders={numPlaceholders}/>   
+        ): (null)}
+      </ul>
+      
+            <div className='py-12 px-12'>
 
-        </div>
-        
-    </div>
-    
+            </div>
+
+              <div className='flex  justify-between items-center py-5 px-5 gap-5 bottom-0 absolute w-full'>
+                <div className='w-full mb-2'>
+                <input
+                  type="text"
+                  className="input bg-slate-700 text-white py-2 px-4 rounded-lg w-full mr-7 "
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  placeholder="Search songs"
+                  name="searchQuery" // Add a name attribute
+                    />
+                </div>
+              <div className='tooltip ' data-tip='Create Playlist'>
+              <div className='btn btn-circle bg-slate-700 border-none text-white hover:bg-slate-500 mb-3' > <MdOutlinePlaylistAdd className='text-xl'/>
+              </div>
+              </div>
+      
+              </div>
+              
+          </div>
+          
+
+    ): (null)}
+
 
     </div>
     </div>

@@ -15,7 +15,6 @@ function App() {
 
     if (accessToken) {
       setToken(accessToken);
-      console.log({ accessToken });
       window.history.replaceState({}, document.title, '/');
     }
   }, []); // Run this effect only once when the component mounts
