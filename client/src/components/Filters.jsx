@@ -1,5 +1,5 @@
 import React from 'react';
-import Dropdown from './Dropdown'; // Import your Dropdown component if needed
+import Dropdown from './Dropdown';
 
 const Filters = ({
   onArtistSelection,
