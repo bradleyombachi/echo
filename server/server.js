@@ -41,7 +41,7 @@ app.get('/login', function(req, res) {
     }));
 });
 
-// ... (previous server-side code)
+
 
 app.get('/callback', async function(req, res) {
   const code = req.query.code || null;
@@ -84,7 +84,6 @@ app.get('/callback', async function(req, res) {
   }
 });
 
-// ... (remaining server-side code)
 
 
 const PORT = 8888;
