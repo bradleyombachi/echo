@@ -30,9 +30,9 @@ function AddToPlaylist({uri, token}) {
   };
 
   const handleConfirm = () => {
-    // Add your logic to handle the confirmation
+
     console.log(selectedPlaylist);
-    // Close the modal
+    
     document.getElementById('playlistConfirm').close();
   };
 
